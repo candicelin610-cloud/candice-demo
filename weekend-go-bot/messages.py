@@ -10,6 +10,8 @@ from linebot.v3.messaging.models import (
     QuickReply,
     QuickReplyItem,
     PostbackAction,
+    BubbleContainer,
+    CarouselContainer,
 )
 
 import stamps
@@ -81,7 +83,7 @@ def welcome_flex_message():
     }
     return FlexMessage(
         alt_text="歡迎加入 Weekend GO！雙北遊憩 Bot",
-        contents=bubble,
+        contents=BubbleContainer.from_dict(bubble),
     )
 
 
@@ -236,7 +238,7 @@ def activity_carousel_message(category):
     }
     return FlexMessage(
         alt_text=f"{info['title']} 活動推薦",
-        contents=carousel,
+        contents=CarouselContainer.from_dict(carousel),
     )
 
 
@@ -283,7 +285,7 @@ def random_recommendation_message():
     }
     return FlexMessage(
         alt_text="今天推薦你這條路線",
-        contents=bubble,
+        contents=BubbleContainer.from_dict(bubble),
     )
 
 
@@ -394,7 +396,7 @@ def itinerary_timeline_flex(pref):
     }
     return FlexMessage(
         alt_text=info["title"],
-        contents=bubble,
+        contents=BubbleContainer.from_dict(bubble),
     )
 
 
@@ -447,7 +449,7 @@ def passport_flex(user_id):
     }
     return FlexMessage(
         alt_text="集章護照",
-        contents=bubble,
+        contents=BubbleContainer.from_dict(bubble),
     )
 
 
@@ -534,7 +536,7 @@ def videos_carousel_message():
     carousel = {"type": "carousel", "contents": bubbles}
     return FlexMessage(
         alt_text="活動影片",
-        contents=carousel,
+        contents=CarouselContainer.from_dict(carousel),
     )
 
 
@@ -571,5 +573,5 @@ def faq_carousel_message():
     carousel = {"type": "carousel", "contents": bubbles}
     return FlexMessage(
         alt_text="常見問題 FAQ",
-        contents=carousel,
+        contents=CarouselContainer.from_dict(carousel),
     )
