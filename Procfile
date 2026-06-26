@@ -1,1 +1,1 @@
-web: python weekend-go-bot/app.py
+web: python3 weekend-go-bot/app.py
