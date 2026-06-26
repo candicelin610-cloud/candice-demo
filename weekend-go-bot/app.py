@@ -65,5 +65,5 @@ def on_postback(event):
 
 
 if __name__ == "__main__":
-    # 5000 埠在 macOS 上常被 AirPlay Receiver 佔用，因此改用 5001
-    app.run(host="0.0.0.0", port=5001, debug=True)
+    port = int(os.environ.get("PORT", 5001))
+    app.run(host="0.0.0.0", port=port)
