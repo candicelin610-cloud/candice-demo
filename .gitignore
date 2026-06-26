@@ -5,6 +5,8 @@
 
 # Node.js
 node_modules/
+package.json
+package-lock.json
 
 # Python 虛擬環境
 .venv/
