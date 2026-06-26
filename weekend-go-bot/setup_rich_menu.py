@@ -28,6 +28,7 @@ from linebot.v3.messaging.models import (
     RichMenuBounds,
     RichMenuSize,
     MessageAction,
+    URIAction,
 )
 
 load_dotenv()
@@ -46,15 +47,15 @@ ROW_HEIGHT = MENU_HEIGHT // 2
 
 IMAGE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "rich_menu.png")
 
-# 6 個格子：(label, icon_key, message_text)，依「第一列 3 格、第二列 3 格」排列
-# 點擊按鈕會在對話框自動送出 message_text
+# 6 個格子：(label, icon_key, action)，依「第一列 3 格、第二列 3 格」排列
+# action 格式：("message", 送出文字) 或 ("uri", 連結網址)
 MENU_ITEMS = [
-    ("活動推薦", "bike",     "🗺️ 活動推薦"),
-    ("一日行程", "map",      "🚶 一日行程"),
-    ("集章護照", "medal",    "📖 集章護照"),
-    ("活動影片", "video",    "🎬 活動影片"),
-    ("FAQ",     "question", "❓ FAQ"),
-    ("我的集章", "person",   "🏅 我的集章"),
+    ("活動推薦", "bike",     ("message", "🗺️ 活動推薦")),
+    ("一日行程", "map",      ("message", "🚶 一日行程")),
+    ("集章護照", "medal",    ("uri",     "https://u.lin.ee/8igs0Kh")),
+    ("活動影片", "video",    ("message", "🎬 活動影片")),
+    ("FAQ",     "question", ("message", "❓ FAQ")),
+    ("我的集章", "person",   ("message", "🏅 我的集章")),
 ]
 
 # 鵝黃色系配色：依格子位置給不同深淺的黃，圖示與文字統一用深咖啡色
@@ -221,7 +222,7 @@ def generate_image():
     icon_radius = min(COL_WIDTH, ROW_HEIGHT) * 0.22
     icon_line_width = max(int(icon_radius * 0.12), 8)
 
-    for index, (label, icon_key, _message_text) in enumerate(MENU_ITEMS):
+    for index, (label, icon_key, _action_def) in enumerate(MENU_ITEMS):
         row = index // 3
         col = index % 3
         x0 = col * COL_WIDTH
@@ -260,9 +261,14 @@ def generate_image():
 
 def build_rich_menu_areas():
     areas = []
-    for index, (label, _icon, message_text) in enumerate(MENU_ITEMS):
+    for index, (label, _icon, action_def) in enumerate(MENU_ITEMS):
         row = index // 3
         col = index % 3
+        action_type, action_value = action_def
+        if action_type == "uri":
+            action = URIAction(label=label, uri=action_value)
+        else:
+            action = MessageAction(label=label, text=action_value)
         areas.append(
             RichMenuArea(
                 bounds=RichMenuBounds(
@@ -271,7 +277,7 @@ def build_rich_menu_areas():
                     width=COL_WIDTH,
                     height=ROW_HEIGHT,
                 ),
-                action=MessageAction(label=label, text=message_text),
+                action=action,
             )
         )
     return areas
