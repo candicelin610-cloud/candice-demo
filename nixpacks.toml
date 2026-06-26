@@ -1,0 +1,5 @@
+[phases.setup]
+nixPkgs = ["python311", "python311Packages.pip"]
+
+[start]
+cmd = "pip install -r weekend-go-bot/requirements.txt && python3 weekend-go-bot/app.py"
