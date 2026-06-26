@@ -3,7 +3,7 @@
 """
 from urllib.parse import parse_qs
 
-from linebot.models import TextSendMessage
+from linebot.v3.messaging.models import TextMessage
 
 import messages
 import stamps
@@ -55,7 +55,7 @@ def handle_postback_event(user_id, data):
     if action == "faq":
         return [messages.faq_carousel_message()]
 
-    return [TextSendMessage(text="收到囉！但這個指令我還不認識 🤔")]
+    return [TextMessage(text="收到囉！但這個指令我還不認識 🤔")]
 
 
 def handle_text_message(user_id, text):
@@ -66,7 +66,7 @@ def handle_text_message(user_id, text):
         spot = text[2:].strip()
         if not spot:
             spots_text = "、".join(stamps.SPOTS)
-            return [TextSendMessage(text=f"請輸入「集章 景點名稱」喔，例如「集章 象山」。\n可集章的景點有：\n{spots_text}")]
+            return [TextMessage(text=f"請輸入「集章 景點名稱」喔，例如「集章 象山」。\n可集章的景點有：\n{spots_text}")]
 
         success, already_had = stamps.add_stamp(user_id, spot)
         if not success:

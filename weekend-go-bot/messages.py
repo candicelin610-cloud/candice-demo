@@ -4,11 +4,11 @@
 """
 import random
 
-from linebot.models import (
-    FlexSendMessage,
-    TextSendMessage,
+from linebot.v3.messaging.models import (
+    FlexMessage,
+    TextMessage,
     QuickReply,
-    QuickReplyButton,
+    QuickReplyItem,
     PostbackAction,
 )
 
@@ -79,14 +79,14 @@ def welcome_flex_message():
             ],
         },
     }
-    return FlexSendMessage(
+    return FlexMessage(
         alt_text="歡迎加入 Weekend GO！雙北遊憩 Bot",
         contents=bubble,
     )
 
 
 def start_text_message():
-    return TextSendMessage(
+    return TextMessage(
         text="太棒了！點選下方選單就能開始探索 🎉\n"
         "🚴 活動推薦 / 🗺 一日行程 / 🏅 集章護照\n"
         "都可以從選單直接點選喔！"
@@ -152,10 +152,10 @@ def activity_category_quick_reply():
         ("🎯 不知道去哪", "action=activities&category=random"),
     ]
     items = [
-        QuickReplyButton(action=PostbackAction(label=label, data=data))
+        QuickReplyItem(action=PostbackAction(label=label, data=data))
         for label, data in categories
     ]
-    return TextSendMessage(
+    return TextMessage(
         text="想做什麼類型的活動呢？選一個分類給你推薦 👇",
         quick_reply=QuickReply(items=items),
     )
@@ -228,13 +228,13 @@ def activity_carousel_message(category):
 
     info = ACTIVITY_DATA.get(category)
     if not info:
-        return TextSendMessage(text="找不到這個分類，請重新選擇喔！")
+        return TextMessage(text="找不到這個分類，請重新選擇喔！")
 
     carousel = {
         "type": "carousel",
         "contents": [_activity_bubble(item) for item in info["items"]],
     }
-    return FlexSendMessage(
+    return FlexMessage(
         alt_text=f"{info['title']} 活動推薦",
         contents=carousel,
     )
@@ -281,14 +281,14 @@ def random_recommendation_message():
             ],
         },
     }
-    return FlexSendMessage(
+    return FlexMessage(
         alt_text="今天推薦你這條路線",
         contents=bubble,
     )
 
 
 def start_today_text_message():
-    return TextSendMessage(text="祝你有美好的一天 🌞 出發前記得帶水跟防曬，玩得愉快！")
+    return TextMessage(text="祝你有美好的一天 🌞 出發前記得帶水跟防曬，玩得愉快！")
 
 
 # ---------------------------------------------------------------------------
@@ -342,10 +342,10 @@ def itinerary_preference_quick_reply():
         ("拍照打卡", "action=itinerary&pref=photo"),
     ]
     items = [
-        QuickReplyButton(action=PostbackAction(label=label, data=data))
+        QuickReplyItem(action=PostbackAction(label=label, data=data))
         for label, data in prefs
     ]
-    return TextSendMessage(
+    return TextMessage(
         text="想規劃哪一種一日行程呢？",
         quick_reply=QuickReply(items=items),
     )
@@ -354,7 +354,7 @@ def itinerary_preference_quick_reply():
 def itinerary_timeline_flex(pref):
     info = ITINERARY_DATA.get(pref)
     if not info:
-        return TextSendMessage(text="找不到這個行程偏好，請重新選擇喔！")
+        return TextMessage(text="找不到這個行程偏好，請重新選擇喔！")
 
     timeline_contents = []
     for i, (time, place) in enumerate(info["steps"]):
@@ -392,7 +392,7 @@ def itinerary_timeline_flex(pref):
             ],
         },
     }
-    return FlexSendMessage(
+    return FlexMessage(
         alt_text=info["title"],
         contents=bubble,
     )
@@ -445,7 +445,7 @@ def passport_flex(user_id):
             ],
         },
     }
-    return FlexSendMessage(
+    return FlexMessage(
         alt_text="集章護照",
         contents=bubble,
     )
@@ -454,10 +454,10 @@ def passport_flex(user_id):
 def my_stamps_text(user_id):
     completed, total, remaining = stamps.get_progress(user_id)
     if remaining == 0:
-        return TextSendMessage(
+        return TextMessage(
             text=f"🎉 太厲害了！你已經完成全部 {total} 個景點集章，恭喜達成 Weekend GO 雙北遊憩成就！"
         )
-    return TextSendMessage(
+    return TextMessage(
         text=f"目前已完成 {completed}/{total} 個景點集章 🏅\n"
         f"距離完成護照還差 {remaining} 個，繼續加油！"
     )
@@ -466,8 +466,8 @@ def my_stamps_text(user_id):
 def stamp_added_text(spot, already_had, user_id):
     completed, total, remaining = stamps.get_progress(user_id)
     if already_had:
-        return TextSendMessage(text=f"「{spot}」之前就蓋過章囉！目前已完成 {completed}/{total} 個 🏅")
-    return TextSendMessage(
+        return TextMessage(text=f"「{spot}」之前就蓋過章囉！目前已完成 {completed}/{total} 個 🏅")
+    return TextMessage(
         text=f"✅ 已幫你蓋上「{spot}」的章！\n"
         f"目前進度：{completed}/{total}，還差 {remaining} 個就完成護照了！"
     )
@@ -475,7 +475,7 @@ def stamp_added_text(spot, already_had, user_id):
 
 def stamp_invalid_text(spot):
     spots_text = "、".join(stamps.SPOTS)
-    return TextSendMessage(
+    return TextMessage(
         text=f"找不到「{spot}」這個景點喔，可集章的景點有：\n{spots_text}"
     )
 
@@ -532,7 +532,7 @@ def videos_carousel_message():
             }
         )
     carousel = {"type": "carousel", "contents": bubbles}
-    return FlexSendMessage(
+    return FlexMessage(
         alt_text="活動影片",
         contents=carousel,
     )
@@ -569,7 +569,7 @@ def faq_carousel_message():
             }
         )
     carousel = {"type": "carousel", "contents": bubbles}
-    return FlexSendMessage(
+    return FlexMessage(
         alt_text="常見問題 FAQ",
         contents=carousel,
     )
