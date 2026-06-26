@@ -59,8 +59,22 @@ def handle_postback_event(user_id, data):
 
 
 def handle_text_message(user_id, text):
-    """處理文字訊息，目前支援「集章 景點名稱」指令"""
+    """處理文字訊息：Rich Menu 關鍵字 + 「集章 景點名稱」指令"""
     text = text.strip()
+
+    # Rich Menu 按鈕送出的固定關鍵字
+    if text == "🗺️ 活動推薦":
+        return [messages.activity_category_quick_reply()]
+    if text == "🚶 一日行程":
+        return [messages.itinerary_preference_quick_reply()]
+    if text == "📖 集章護照":
+        return [messages.passport_flex(user_id)]
+    if text == "🎬 活動影片":
+        return [messages.videos_carousel_message()]
+    if text == "❓ FAQ":
+        return [messages.faq_carousel_message()]
+    if text == "🏅 我的集章":
+        return [messages.my_stamps_text(user_id)]
 
     if text.startswith("集章"):
         spot = text[2:].strip()
@@ -74,7 +88,7 @@ def handle_text_message(user_id, text):
         return [messages.stamp_added_text(spot, already_had, user_id)]
 
     return [
-        TextSendMessage(
+        TextMessage(
             text="點選下方選單就能探索 Weekend GO 的功能喔 🎉\n"
             "🚴 活動推薦 / 🗺 一日行程 / 🏅 集章護照 / 🎥 活動影片 / ❓ FAQ / 👤 我的集章"
         )

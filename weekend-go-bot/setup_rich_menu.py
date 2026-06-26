@@ -4,7 +4,7 @@
 LINE 的 Rich Menu 圖片與設定必須透過 Messaging API 上傳，無法只靠 webhook 完成，
 因此用這支獨立腳本：
 1. 用 Pillow 產生一張 2500x1686 的 Rich Menu 圖片（6 格 + 文字標籤）
-2. 呼叫 LINE API 建立 Rich Menu 並設定 6 個區域的 postback action
+2. 呼叫 LINE API 建立 Rich Menu 並設定 6 個區域的 message action
 3. 上傳圖片、並將此 Rich Menu 設為全部使用者的預設選單
 
 執行方式：
@@ -16,8 +16,19 @@ import os
 from dotenv import load_dotenv
 from PIL import Image, ImageDraw, ImageFont
 
-from linebot import LineBotApi
-from linebot.models import RichMenu, RichMenuArea, RichMenuBounds, PostbackAction
+from linebot.v3.messaging import (
+    ApiClient,
+    MessagingApi,
+    MessagingApiBlob,
+    Configuration,
+)
+from linebot.v3.messaging.models import (
+    RichMenuRequest,
+    RichMenuArea,
+    RichMenuBounds,
+    RichMenuSize,
+    MessageAction,
+)
 
 load_dotenv()
 
@@ -25,7 +36,7 @@ LINE_CHANNEL_ACCESS_TOKEN = os.environ.get("LINE_CHANNEL_ACCESS_TOKEN")
 if not LINE_CHANNEL_ACCESS_TOKEN:
     raise RuntimeError("請先在 .env 設定 LINE_CHANNEL_ACCESS_TOKEN")
 
-line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
+configuration = Configuration(access_token=LINE_CHANNEL_ACCESS_TOKEN)
 
 # Rich Menu 圖片尺寸（LINE 建議的標準尺寸，2 列 3 欄）
 MENU_WIDTH = 2500
@@ -35,14 +46,15 @@ ROW_HEIGHT = MENU_HEIGHT // 2
 
 IMAGE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "rich_menu.png")
 
-# 6 個格子：(label, icon_key, postback data)，依「第一列 3 格、第二列 3 格」排列
+# 6 個格子：(label, icon_key, message_text)，依「第一列 3 格、第二列 3 格」排列
+# 點擊按鈕會在對話框自動送出 message_text
 MENU_ITEMS = [
-    ("活動推薦", "bike", "action=activities"),
-    ("一日行程", "map", "action=itinerary"),
-    ("集章護照", "medal", "action=passport"),
-    ("活動影片", "video", "action=videos"),
-    ("FAQ", "question", "action=faq"),
-    ("我的集章", "person", "action=my_stamps"),
+    ("活動推薦", "bike",     "🗺️ 活動推薦"),
+    ("一日行程", "map",      "🚶 一日行程"),
+    ("集章護照", "medal",    "📖 集章護照"),
+    ("活動影片", "video",    "🎬 活動影片"),
+    ("FAQ",     "question", "❓ FAQ"),
+    ("我的集章", "person",   "🏅 我的集章"),
 ]
 
 # 鵝黃色系配色：依格子位置給不同深淺的黃，圖示與文字統一用深咖啡色
@@ -209,7 +221,7 @@ def generate_image():
     icon_radius = min(COL_WIDTH, ROW_HEIGHT) * 0.22
     icon_line_width = max(int(icon_radius * 0.12), 8)
 
-    for index, (label, icon_key, _data) in enumerate(MENU_ITEMS):
+    for index, (label, icon_key, _message_text) in enumerate(MENU_ITEMS):
         row = index // 3
         col = index % 3
         x0 = col * COL_WIDTH
@@ -248,7 +260,7 @@ def generate_image():
 
 def build_rich_menu_areas():
     areas = []
-    for index, (label, _icon, data) in enumerate(MENU_ITEMS):
+    for index, (label, _icon, message_text) in enumerate(MENU_ITEMS):
         row = index // 3
         col = index % 3
         areas.append(
@@ -259,7 +271,7 @@ def build_rich_menu_areas():
                     width=COL_WIDTH,
                     height=ROW_HEIGHT,
                 ),
-                action=PostbackAction(label=label, data=data),
+                action=MessageAction(label=label, text=message_text),
             )
         )
     return areas
@@ -269,23 +281,28 @@ def main():
     image_path = generate_image()
     print(f"已產生 Rich Menu 圖片：{image_path}")
 
-    rich_menu = RichMenu(
-        size={"width": MENU_WIDTH, "height": MENU_HEIGHT},
+    rich_menu = RichMenuRequest(
+        size=RichMenuSize(width=MENU_WIDTH, height=MENU_HEIGHT),
         selected=True,
         name="Weekend GO Main Menu",
         chat_bar_text="開啟選單",
         areas=build_rich_menu_areas(),
     )
 
-    rich_menu_id = line_bot_api.create_rich_menu(rich_menu=rich_menu)
-    print(f"已建立 Rich Menu，ID：{rich_menu_id}")
+    with ApiClient(configuration) as api_client:
+        line_bot_api = MessagingApi(api_client)
+        line_bot_api_blob = MessagingApiBlob(api_client)
 
-    with open(image_path, "rb") as f:
-        line_bot_api.set_rich_menu_image(rich_menu_id, "image/png", f)
-    print("已上傳 Rich Menu 圖片")
+        response = line_bot_api.create_rich_menu(rich_menu_request=rich_menu)
+        rich_menu_id = response.rich_menu_id
+        print(f"已建立 Rich Menu，ID：{rich_menu_id}")
 
-    line_bot_api.set_default_rich_menu(rich_menu_id)
-    print("已將此 Rich Menu 設為所有使用者的預設選單 ✅")
+        with open(image_path, "rb") as f:
+            line_bot_api_blob.set_rich_menu_image(rich_menu_id, body=f.read())
+        print("已上傳 Rich Menu 圖片")
+
+        line_bot_api.set_default_rich_menu(rich_menu_id)
+        print("已將此 Rich Menu 設為所有使用者的預設選單 ✅")
 
 
 if __name__ == "__main__":
