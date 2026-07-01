@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>拼圖集章 — Weekend GO！</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #FFFDE7;
+      min-height: 100vh;
+      padding: 24px 16px 40px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    header h1 { font-size: 1.5rem; color: #5D4037; }
+    header p  { font-size: 0.9rem; color: #8D6E63; margin-top: 4px; }
+
+    .progress-bar-wrap {
+      background: #FFE082;
+      border-radius: 99px;
+      height: 12px;
+      margin: 12px auto;
+      max-width: 320px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      background: #FBC02D;
+      height: 100%;
+      border-radius: 99px;
+      transition: width .4s ease;
+    }
+    .progress-label {
+      text-align: center;
+      font-size: 0.85rem;
+      color: #795548;
+      margin-top: 6px;
+    }
+
+    /* 3×3 拼圖格 */
+    .puzzle-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      max-width: 360px;
+      margin: 24px auto;
+    }
+
+    .piece {
+      aspect-ratio: 1;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 4px;
+      text-align: center;
+      font-size: 0.72rem;
+      line-height: 1.4;
+      transition: transform .15s;
+      cursor: default;
+    }
+    .piece.collected {
+      background: #FBC02D;
+      color: #5D4037;
+      box-shadow: 0 2px 8px rgba(251,192,45,.45);
+    }
+    .piece.locked {
+      background: #EFEBE9;
+      color: #BCAAA4;
+    }
+    .piece .emoji  { font-size: 1.6rem; margin-bottom: 4px; }
+    .piece .pname  { font-weight: 700; }
+    .piece .ploc   { font-size: 0.65rem; opacity: .8; }
+    .piece.locked .emoji { filter: grayscale(1); opacity: .35; }
+
+    .complete-banner {
+      display: none;
+      background: #FBC02D;
+      color: #5D4037;
+      text-align: center;
+      border-radius: 12px;
+      padding: 16px;
+      margin: 16px auto;
+      max-width: 360px;
+      font-weight: 700;
+      font-size: 1rem;
+    }
+
+    .scan-btn {
+      display: block;
+      margin: 0 auto;
+      max-width: 240px;
+      padding: 14px;
+      background: #5D4037;
+      color: #FFF9C4;
+      text-align: center;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 700;
+      text-decoration: none;
+      letter-spacing: .05em;
+    }
+    .scan-btn:active { opacity: .8; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🧩 拼圖集章</h1>
+  <p>走訪雙北景點，掃碼解鎖拼圖碎片！</p>
+</header>
+
+{% set pct = (count / total * 100) | int %}
+<div class="progress-bar-wrap">
+  <div class="progress-bar-fill" style="width: {{ pct }}%"></div>
+</div>
+<p class="progress-label">已收集 {{ count }} / {{ total }} 片</p>
+
+{% if count == total %}
+<div class="complete-banner" style="display:block">
+  🎉 恭喜！你已集齊全部 {{ total }} 片，完成 Weekend GO 拼圖！
+</div>
+{% endif %}
+
+<div class="puzzle-grid">
+  {% set icons = ["🏔️","🌳","🌋","🛶","🚴","🌉","🌿","🥾","⛰️"] %}
+  {% for p in pieces %}
+  <div class="piece {{ 'collected' if p.collected else 'locked' }}">
+    <div class="emoji">{{ icons[loop.index0] }}</div>
+    <div class="pname">{{ p.name }}</div>
+    <div class="ploc">{{ p.location }}</div>
+  </div>
+  {% endfor %}
+</div>
+
+<a class="scan-btn" href="/puzzle/scan?uid={{ user_id }}">📷 掃碼解鎖碎片</a>
+
+</body>
+</html>

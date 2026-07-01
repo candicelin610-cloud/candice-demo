@@ -13,6 +13,8 @@ from linebot.v3.messaging import ApiClient, MessagingApi, Configuration, ReplyMe
 from linebot.v3.webhooks import MessageEvent, TextMessageContent, PostbackEvent, FollowEvent
 
 import handlers
+from puzzle.routes import puzzle_bp
+from puzzle.models import init_db
 
 load_dotenv()
 
@@ -23,6 +25,9 @@ if not LINE_CHANNEL_SECRET or not LINE_CHANNEL_ACCESS_TOKEN:
     raise RuntimeError("請先在 .env 設定 LINE_CHANNEL_SECRET 與 LINE_CHANNEL_ACCESS_TOKEN")
 
 app = Flask(__name__)
+app.register_blueprint(puzzle_bp)
+init_db()
+
 configuration = Configuration(access_token=LINE_CHANNEL_ACCESS_TOKEN)
 webhook_handler = WebhookHandler(LINE_CHANNEL_SECRET)
 
