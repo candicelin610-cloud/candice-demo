@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>拼圖集章 — Weekend GO！</title>
+  <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -139,7 +140,27 @@
   {% endfor %}
 </div>
 
-<a class="scan-btn" href="/puzzle/scan?uid={{ user_id }}">📷 掃碼解鎖碎片</a>
+<a class="scan-btn" id="scan-btn" href="/puzzle/scan?uid={{ user_id }}">📷 掃碼解鎖碎片</a>
+
+<script>
+  const LIFF_ID = "2010569072-7YL42XMG";
+
+  liff.init({ liffId: LIFF_ID }).then(() => {
+    if (!liff.isLoggedIn()) return;
+    return liff.getProfile();
+  }).then(profile => {
+    if (!profile) return;
+    const liffUid = profile.userId;
+    const currentUid = "{{ user_id }}";
+    // 若 Flask 用的 uid 與 LIFF 取得的不同，重新導向以取得正確拼圖進度
+    if (liffUid !== currentUid) {
+      window.location.replace("/puzzle?uid=" + encodeURIComponent(liffUid));
+    }
+    // 同步更新掃碼按鈕連結
+    document.getElementById("scan-btn").href =
+      "/puzzle/scan?uid=" + encodeURIComponent(liffUid);
+  }).catch(err => console.error("LIFF init error:", err));
+</script>
 
 </body>
 </html>

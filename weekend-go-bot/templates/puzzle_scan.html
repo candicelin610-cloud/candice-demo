@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>掃碼解鎖 — Weekend GO！</title>
+  <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <!-- html5-qrcode：純 JS QR 掃碼，支援手機相機 -->
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <style>
@@ -68,22 +69,40 @@
 <div id="reader"></div>
 <div id="result"></div>
 
-<a class="back-btn" href="/puzzle?uid={{ user_id }}">← 返回拼圖進度</a>
+<a class="back-btn" id="back-btn" href="/puzzle?uid={{ user_id }}">← 返回拼圖進度</a>
 
 <script>
-  const USER_ID = "{{ user_id }}";
-  let scanning = true;
+  const LIFF_ID = "2010569072-Xzfs0jWO";
+  const BOARD_LIFF_URL = "https://liff.line.me/2010569072-7YL42XMG";
 
-  const html5QrCode = new Html5Qrcode("reader");
+  let USER_ID = "{{ user_id }}";  // LIFF 初始化前的 fallback
+  let scanning = false;           // 等 LIFF init 完再開始掃
 
-  html5QrCode.start(
-    { facingMode: "environment" },      // 優先使用後鏡頭
-    { fps: 10, qrbox: { width: 220, height: 220 } },
-    onScanSuccess,
-    () => {}                            // 忽略掃描中的錯誤提示
-  ).catch(err => showResult("error", "❌", "無法開啟相機", err.toString()));
+  // 先初始化 LIFF 取得真實 user ID，再啟動掃描器
+  liff.init({ liffId: LIFF_ID }).then(() => {
+    if (liff.isLoggedIn()) {
+      return liff.getProfile();
+    }
+  }).then(profile => {
+    if (profile) USER_ID = profile.userId;
+  }).catch(err => {
+    console.error("LIFF init error:", err);
+  }).finally(() => {
+    startScanner();
+  });
 
-  async function onScanSuccess(decodedText) {
+  function startScanner() {
+    scanning = true;
+    const html5QrCode = new Html5Qrcode("reader");
+    html5QrCode.start(
+      { facingMode: "environment" },      // 優先使用後鏡頭
+      { fps: 10, qrbox: { width: 220, height: 220 } },
+      (decodedText) => onScanSuccess(html5QrCode, decodedText),
+      () => {}                            // 忽略掃描中的錯誤提示
+    ).catch(err => showResult("error", "❌", "無法開啟相機", err.toString()));
+  }
+
+  async function onScanSuccess(html5QrCode, decodedText) {
     if (!scanning) return;
     scanning = false;                   // 避免重複送出
 
