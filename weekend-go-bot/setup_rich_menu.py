@@ -55,7 +55,7 @@ MENU_ITEMS = [
     ("集章護照", "medal",    ("uri",     "https://liff.line.me/2010569072-7YL42XMG")),
     ("活動影片", "video",    ("message", "🎬 活動影片")),
     ("FAQ",     "question", ("message", "❓ FAQ")),
-    ("我的集章", "person",   ("uri",     "https://liff.line.me/2010569072-Xzfs0jWO")),
+    ("掃碼集章", "person",   ("uri",     "https://liff.line.me/2010569072-Xzfs0jWO")),
 ]
 
 # 鵝黃色系配色：依格子位置給不同深淺的黃，圖示與文字統一用深咖啡色
