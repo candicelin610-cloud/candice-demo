@@ -552,6 +552,110 @@ FAQ_DATA = [
 ]
 
 
+# ---------------------------------------------------------------------------
+# 8. 拼圖集章進度 Carousel
+# ---------------------------------------------------------------------------
+
+# 與 puzzle.html 相同的步道圖示順序
+_TRAIL_ICONS = ["🏔️", "🌳", "🌋", "🛶", "🚴", "🌉", "🌿", "🥾", "⛰️"]
+
+
+def _trail_bubble(piece, is_collected, icon):
+    """單一步道的 micro Flex Bubble（已解鎖黃、未解鎖灰）。"""
+    if is_collected:
+        hero_bg      = "#FBC02D"
+        body_bg      = "#FFFDE7"
+        name_color   = "#5D4037"
+        loc_color    = "#8D6E63"
+        status       = "✅ 已蓋章"
+        status_color = "#5D4037"
+    else:
+        hero_bg      = "#E0E0E0"
+        body_bg      = "#F5F5F5"
+        name_color   = "#9E9E9E"
+        loc_color    = "#BDBDBD"
+        status       = "🔒 未解鎖"
+        status_color = "#9E9E9E"
+
+    return {
+        "type": "bubble",
+        "size": "micro",
+        "hero": {
+            "type": "box",
+            "layout": "vertical",
+            "height": "70px",
+            "backgroundColor": hero_bg,
+            "justifyContent": "center",
+            "contents": [
+                {"type": "text", "text": icon, "align": "center", "size": "xxl"}
+            ],
+        },
+        "body": {
+            "type": "box",
+            "layout": "vertical",
+            "backgroundColor": body_bg,
+            "paddingAll": "10px",
+            "spacing": "xs",
+            "contents": [
+                {"type": "text", "text": piece["name"],     "weight": "bold", "size": "sm",  "color": name_color,   "wrap": True},
+                {"type": "text", "text": piece["location"], "size": "xxs",                   "color": loc_color,    "wrap": True},
+                {"type": "separator", "margin": "sm"},
+                {"type": "text", "text": status, "size": "xs", "color": status_color,
+                 "margin": "sm", "align": "center"},
+            ],
+        },
+    }
+
+
+def puzzle_progress_carousel(user_id):
+    """回傳拼圖集章進度的 Flex Carousel：總覽小卡 + 9 張步道卡。"""
+    from puzzle.models import PIECES, get_user_pieces
+
+    collected = get_user_pieces(user_id)
+    count = len(collected)
+    total = len(PIECES)
+
+    # 文字進度條，█ 已解鎖、░ 未解鎖
+    bar = "█" * count + "░" * (total - count)
+
+    summary = {
+        "type": "bubble",
+        "size": "micro",
+        "body": {
+            "type": "box",
+            "layout": "vertical",
+            "backgroundColor": "#FFFDE7",
+            "paddingAll": "14px",
+            "spacing": "sm",
+            "contents": [
+                {"type": "text", "text": "🧩 拼圖集章", "weight": "bold",
+                 "size": "sm", "color": "#5D4037"},
+                {"type": "separator", "margin": "sm"},
+                {"type": "text", "text": f"{count} / {total}", "size": "3xl",
+                 "weight": "bold", "color": "#FBC02D", "align": "center", "margin": "md"},
+                {"type": "text", "text": "塊已蓋章", "size": "xs",
+                 "color": "#8D6E63", "align": "center"},
+                {"type": "text", "text": bar, "size": "sm",
+                 "color": "#FBC02D", "align": "center", "margin": "md"},
+                {"type": "text", "text": "滑動查看各步道 →", "size": "xxs",
+                 "color": "#BCAAA4", "align": "center", "margin": "sm"},
+            ],
+        },
+    }
+
+    trail_bubbles = [
+        _trail_bubble(piece, piece["id"] in collected, _TRAIL_ICONS[i])
+        for i, piece in enumerate(PIECES)
+    ]
+
+    return FlexMessage(
+        alt_text=f"🧩 拼圖集章進度：已集 {count}/{total} 塊",
+        contents=FlexCarousel.from_dict(
+            {"type": "carousel", "contents": [summary] + trail_bubbles}
+        ),
+    )
+
+
 def faq_carousel_message():
     bubbles = []
     for faq in FAQ_DATA:

@@ -76,6 +76,9 @@ def handle_text_message(user_id, text):
     if text == "🏅 我的集章":
         return [messages.my_stamps_text(user_id)]
 
+    if text == "集章進度":
+        return [messages.puzzle_progress_carousel(user_id)]
+
     if text.startswith("集章"):
         spot = text[2:].strip()
         if not spot:
