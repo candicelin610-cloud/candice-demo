@@ -206,13 +206,20 @@ def _draw_person_icon(draw, cx, cy, r, color, width):
 
 
 def _draw_trophy_icon(draw, cx, cy, r, color, width):
-    """獎盃圖示：梯形杯身 + 兩側把手（弧線） + 頸部 + 底座"""
-    cup_tw = r * 0.72    # 杯口半寬
-    cup_bw = r * 0.38    # 杯底半寬
-    cup_ty = cy - r * 0.70
+    """獎盃剪影：圓頂杯身 + 頸部 + 底座（純實心、無描線把手）"""
+    cup_tw = r * 0.76    # 杯口半寬（最寬）
+    cup_bw = r * 0.36    # 杯底半寬（最窄）
+    cup_ty = cy - r * 0.72
     cup_by = cy - r * 0.10
 
-    # 杯身（梯形填實）
+    # ① 圓頂橢圓（讓杯口上緣圓潤）
+    rim_h = r * 0.14
+    draw.ellipse(
+        [cx - cup_tw, cup_ty - rim_h, cx + cup_tw, cup_ty + rim_h],
+        fill=color,
+    )
+
+    # ② 杯身梯形（從橢圓中線向下收窄）
     draw.polygon([
         (cx - cup_tw, cup_ty),
         (cx + cup_tw, cup_ty),
@@ -220,33 +227,14 @@ def _draw_trophy_icon(draw, cx, cy, r, color, width):
         (cx - cup_bw, cup_by),
     ], fill=color)
 
-    # 杯口（橢圓讓頂部圓潤）
-    rim_h = r * 0.13
-    draw.ellipse(
-        [cx - cup_tw, cup_ty - rim_h, cx + cup_tw, cup_ty + rim_h],
-        fill=color,
-    )
-
-    # 把手（兩側弧線；PIL 角度：0°=右, 90°=下, 180°=左, 270°=上，順時針）
-    hw = r * 0.30
-    h_top = cup_ty + r * 0.06
-    h_bot = cup_ty + r * 0.62
-
-    # 左把手：弧往左凸（順時針 90° → 270°，經過 180° 左側）
-    draw.arc([cx - cup_tw - hw * 2, h_top, cx - cup_tw, h_bot],
-             start=90, end=270, fill=color, width=width)
-    # 右把手：弧往右凸（順時針 270° → 90°，經過 0° 右側）
-    draw.arc([cx + cup_tw, h_top, cx + cup_tw + hw * 2, h_bot],
-             start=270, end=90, fill=color, width=width)
-
-    # 頸部（細柱）
-    nw = r * 0.15
-    neck_bot = cy + r * 0.34
+    # ③ 頸部細柱
+    nw = r * 0.17
+    neck_bot = cy + r * 0.33
     draw.rectangle([cx - nw, cup_by, cx + nw, neck_bot], fill=color)
 
-    # 底座
-    bw = r * 0.60
-    draw.rectangle([cx - bw, neck_bot, cx + bw, neck_bot + r * 0.22], fill=color)
+    # ④ 底座平台
+    bw = r * 0.64
+    draw.rectangle([cx - bw, neck_bot, cx + bw, neck_bot + r * 0.23], fill=color)
 
 
 ICON_DRAWERS = {
