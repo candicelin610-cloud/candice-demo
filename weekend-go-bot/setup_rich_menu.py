@@ -54,7 +54,7 @@ MENU_ITEMS = [
     ("一日行程", "map",      ("message", "🚶 一日行程")),
     ("集章護照", "medal",    ("uri",     "https://liff.line.me/2010569072-7YL42XMG")),
     ("活動影片", "video",    ("message", "🎬 活動影片")),
-    ("排行榜",  "question", ("message", "排行榜")),
+    ("排行榜",  "trophy",   ("message", "排行榜")),
     ("掃碼集章", "person",   ("uri",     "https://liff.line.me/2010569072-Xzfs0jWO")),
 ]
 
@@ -205,12 +205,57 @@ def _draw_person_icon(draw, cx, cy, r, color, width):
     )
 
 
+def _draw_trophy_icon(draw, cx, cy, r, color, width):
+    """獎盃圖示：梯形杯身 + 兩側把手（弧線） + 頸部 + 底座"""
+    cup_tw = r * 0.72    # 杯口半寬
+    cup_bw = r * 0.38    # 杯底半寬
+    cup_ty = cy - r * 0.70
+    cup_by = cy - r * 0.10
+
+    # 杯身（梯形填實）
+    draw.polygon([
+        (cx - cup_tw, cup_ty),
+        (cx + cup_tw, cup_ty),
+        (cx + cup_bw, cup_by),
+        (cx - cup_bw, cup_by),
+    ], fill=color)
+
+    # 杯口（橢圓讓頂部圓潤）
+    rim_h = r * 0.13
+    draw.ellipse(
+        [cx - cup_tw, cup_ty - rim_h, cx + cup_tw, cup_ty + rim_h],
+        fill=color,
+    )
+
+    # 把手（兩側弧線；PIL 角度：0°=右, 90°=下, 180°=左, 270°=上，順時針）
+    hw = r * 0.30
+    h_top = cup_ty + r * 0.06
+    h_bot = cup_ty + r * 0.62
+
+    # 左把手：弧往左凸（順時針 90° → 270°，經過 180° 左側）
+    draw.arc([cx - cup_tw - hw * 2, h_top, cx - cup_tw, h_bot],
+             start=90, end=270, fill=color, width=width)
+    # 右把手：弧往右凸（順時針 270° → 90°，經過 0° 右側）
+    draw.arc([cx + cup_tw, h_top, cx + cup_tw + hw * 2, h_bot],
+             start=270, end=90, fill=color, width=width)
+
+    # 頸部（細柱）
+    nw = r * 0.15
+    neck_bot = cy + r * 0.34
+    draw.rectangle([cx - nw, cup_by, cx + nw, neck_bot], fill=color)
+
+    # 底座
+    bw = r * 0.60
+    draw.rectangle([cx - bw, neck_bot, cx + bw, neck_bot + r * 0.22], fill=color)
+
+
 ICON_DRAWERS = {
-    "bike": _draw_bike_icon,
-    "map": _draw_map_icon,
-    "medal": _draw_medal_icon,
-    "video": _draw_video_icon,
+    "bike":   _draw_bike_icon,
+    "map":    _draw_map_icon,
+    "medal":  _draw_medal_icon,
+    "video":  _draw_video_icon,
     "person": _draw_person_icon,
+    "trophy": _draw_trophy_icon,
 }
 
 
