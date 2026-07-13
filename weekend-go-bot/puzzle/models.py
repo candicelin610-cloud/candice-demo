@@ -34,7 +34,7 @@ PIECE_BY_ID = {p["id"]: p for p in PIECES}
 
 
 def init_db():
-    """建立 puzzle_checkins 資料表（若不存在）。"""
+    """建立所有資料表（若不存在）。"""
     os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
     conn.execute("""
@@ -44,6 +44,13 @@ def init_db():
             piece_id   TEXT NOT NULL,
             checked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             UNIQUE(user_id, piece_id)
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS user_profiles (
+            user_id    TEXT PRIMARY KEY,
+            nickname   TEXT NOT NULL,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
     conn.commit()
@@ -58,6 +65,81 @@ def get_user_pieces(user_id: str) -> set:
     ).fetchall()
     conn.close()
     return {row[0] for row in rows}
+
+
+def set_nickname(user_id: str, nickname: str) -> None:
+    """儲存或更新使用者自訂代號。"""
+    conn = sqlite3.connect(DB_PATH)
+    conn.execute("""
+        INSERT INTO user_profiles (user_id, nickname, updated_at)
+        VALUES (?, ?, CURRENT_TIMESTAMP)
+        ON CONFLICT(user_id) DO UPDATE SET
+            nickname = excluded.nickname,
+            updated_at = excluded.updated_at
+    """, (user_id, nickname))
+    conn.commit()
+    conn.close()
+
+
+def get_nickname(user_id: str):
+    """取得使用者自訂代號，未設定則回傳 None。"""
+    conn = sqlite3.connect(DB_PATH)
+    row = conn.execute(
+        "SELECT nickname FROM user_profiles WHERE user_id = ?", (user_id,)
+    ).fetchone()
+    conn.close()
+    return row[0] if row else None
+
+
+def _format_duration(seconds) -> str:
+    """將秒數轉換為易讀的中文時間格式。"""
+    if seconds is None or seconds < 1:
+        return "< 1 秒"
+    seconds = int(seconds)
+    if seconds < 60:
+        return f"{seconds} 秒"
+    minutes, secs = divmod(seconds, 60)
+    if minutes < 60:
+        return f"{minutes} 分 {secs} 秒" if secs else f"{minutes} 分"
+    hours, mins = divmod(minutes, 60)
+    if hours < 24:
+        return f"{hours} 小時 {mins} 分" if mins else f"{hours} 小時"
+    days, hrs = divmod(hours, 24)
+    return f"{days} 天 {hrs} 小時" if hrs else f"{days} 天"
+
+
+def get_leaderboard(limit: int = 10) -> list[dict]:
+    """
+    回傳已集滿 9/9 拼圖的前 N 名玩家，依完成時間（最後一塊 - 第一塊）升冪排列。
+    每筆資料：rank, nickname, seconds, duration_str, finished_at
+    """
+    total = len(PIECES)
+    conn = sqlite3.connect(DB_PATH)
+    rows = conn.execute("""
+        SELECT
+            pc.user_id,
+            COALESCE(up.nickname, '神秘玩家') AS nickname,
+            (JULIANDAY(MAX(pc.checked_at)) - JULIANDAY(MIN(pc.checked_at))) * 86400 AS seconds_taken,
+            MAX(pc.checked_at) AS finished_at
+        FROM puzzle_checkins pc
+        LEFT JOIN user_profiles up ON pc.user_id = up.user_id
+        GROUP BY pc.user_id
+        HAVING COUNT(DISTINCT pc.piece_id) = ?
+        ORDER BY seconds_taken ASC
+        LIMIT ?
+    """, (total, limit)).fetchall()
+    conn.close()
+
+    result = []
+    for rank, (user_id, nickname, seconds, finished_at) in enumerate(rows, start=1):
+        result.append({
+            "rank": rank,
+            "nickname": nickname,
+            "seconds": seconds or 0,
+            "duration_str": _format_duration(seconds),
+            "finished_at": finished_at,
+        })
+    return result
 
 
 def add_piece(user_id: str, piece_id: str) -> tuple[bool, bool]:

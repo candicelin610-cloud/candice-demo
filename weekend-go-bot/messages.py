@@ -761,3 +761,85 @@ def faq_carousel_message():
         alt_text="常見問題 FAQ",
         contents=FlexCarousel.from_dict(carousel),
     )
+
+
+# ---------------------------------------------------------------------------
+# 9. 排行榜
+# ---------------------------------------------------------------------------
+
+_MEDALS = ["🥇", "🥈", "🥉"]
+
+
+def leaderboard_flex(rows: list) -> FlexMessage:
+    """排行榜 Flex Bubble：已集滿 9/9 的前 10 名（依完成時間排列）。"""
+    if not rows:
+        bubble = {
+            "type": "bubble",
+            "body": {
+                "type": "box",
+                "layout": "vertical",
+                "backgroundColor": "#FFFBE0",
+                "paddingAll": "20px",
+                "spacing": "md",
+                "contents": [
+                    {"type": "text", "text": "🏆 拼圖集章排行榜", "weight": "bold",
+                     "size": "lg", "color": "#5D4037"},
+                    {"type": "separator"},
+                    {"type": "text", "text": "還沒有人集滿全部拼圖", "size": "md",
+                     "color": "#8A7A5C", "align": "center", "margin": "xl"},
+                    {"type": "text", "text": "搶頭香就是你！🏃", "size": "sm",
+                     "color": "#F9C846", "align": "center"},
+                ],
+            },
+        }
+        return FlexMessage(
+            alt_text="🏆 拼圖集章排行榜：目前還沒有人集滿",
+            contents=FlexBubble.from_dict(bubble),
+        )
+
+    row_boxes = []
+    for entry in rows:
+        rank = entry["rank"]
+        medal = _MEDALS[rank - 1] if rank <= 3 else str(rank)
+        row_boxes.append({
+            "type": "box",
+            "layout": "horizontal",
+            "margin": "md",
+            "contents": [
+                {"type": "text", "text": medal, "size": "md", "flex": 0, "gravity": "center"},
+                {"type": "text", "text": entry["nickname"], "size": "sm", "weight": "bold",
+                 "color": "#5D4037", "flex": 1, "margin": "sm", "gravity": "center"},
+                {"type": "text", "text": entry["duration_str"], "size": "xs",
+                 "color": "#8A7A5C", "flex": 0, "gravity": "center", "align": "end"},
+            ],
+        })
+
+    bubble = {
+        "type": "bubble",
+        "body": {
+            "type": "box",
+            "layout": "vertical",
+            "backgroundColor": "#FFFBE0",
+            "paddingAll": "20px",
+            "spacing": "none",
+            "contents": [
+                {
+                    "type": "box",
+                    "layout": "horizontal",
+                    "contents": [
+                        {"type": "text", "text": "🏆", "size": "xl", "flex": 0},
+                        {"type": "text", "text": "拼圖集章排行榜", "weight": "bold", "size": "lg",
+                         "color": "#5D4037", "margin": "sm", "gravity": "center"},
+                    ],
+                },
+                {"type": "text", "text": "最速完成 9/9 的玩家", "size": "xs",
+                 "color": "#8A7A5C", "margin": "xs"},
+                {"type": "separator", "margin": "md"},
+                *row_boxes,
+            ],
+        },
+    }
+    return FlexMessage(
+        alt_text=f"🏆 拼圖集章排行榜 Top {len(rows)}",
+        contents=FlexBubble.from_dict(bubble),
+    )

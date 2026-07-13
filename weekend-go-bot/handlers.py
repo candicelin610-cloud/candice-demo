@@ -1,12 +1,14 @@
 """
 各功能的事件 handler，負責解析事件內容並呼叫 messages.py 產生回覆訊息。
 """
+import re
 from urllib.parse import parse_qs
 
 from linebot.v3.messaging.models import TextMessage
 
 import messages
 import stamps
+from puzzle.models import get_leaderboard, set_nickname
 
 
 def parse_postback_data(data):
@@ -78,6 +80,22 @@ def handle_text_message(user_id, text):
 
     if text == "集章進度":
         return [messages.puzzle_progress_carousel(user_id)]
+
+    if text == "排行榜":
+        rows = get_leaderboard()
+        return [messages.leaderboard_flex(rows)]
+
+    if text.startswith("設定代號"):
+        name = text[4:].strip()
+        if not name:
+            return [TextMessage(text="請輸入你的代號，例如：設定代號 健腳大俠")]
+        if len(name) > 10:
+            return [TextMessage(text=f"代號最長 10 個字，「{name}」有 {len(name)} 個字，請縮短一點 😅")]
+        # 至少包含一個文字、數字或中文字（過濾純符號）
+        if not re.search(r'[\w一-鿿぀-ヿ]', name):
+            return [TextMessage(text="代號需要包含至少一個文字或數字喔 🙂")]
+        set_nickname(user_id, name)
+        return [TextMessage(text=f"✅ 代號設定成功：{name}\n之後排行榜就會顯示這個名字！")]
 
     if text.startswith("集章"):
         spot = text[2:].strip()
