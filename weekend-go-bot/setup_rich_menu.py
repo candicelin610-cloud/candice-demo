@@ -54,7 +54,7 @@ MENU_ITEMS = [
     ("一日行程", "map",      ("message", "🚶 一日行程")),
     ("集章護照", "medal",    ("uri",     "https://liff.line.me/2010569072-7YL42XMG")),
     ("活動影片", "video",    ("message", "🎬 活動影片")),
-    ("FAQ",     "question", ("message", "❓ FAQ")),
+    ("排行榜",  "question", ("message", "排行榜")),
     ("掃碼集章", "person",   ("uri",     "https://liff.line.me/2010569072-Xzfs0jWO")),
 ]
 
