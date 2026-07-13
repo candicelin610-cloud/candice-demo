@@ -31,6 +31,7 @@
       box-shadow: 0 4px 16px rgba(0,0,0,.12);
     }
 
+    /* 已收集 / 錯誤的簡易提示 */
     #result {
       margin-top: 20px;
       width: 100%;
@@ -41,13 +42,42 @@
       font-size: 0.95rem;
       display: none;
     }
-    #result.success { background: #FBC02D; color: #5D4037; }
     #result.already { background: #FFE082; color: #795548; }
     #result.error   { background: #FFCDD2; color: #B71C1C; }
-
     #result .big { font-size: 2rem; margin-bottom: 6px; }
     #result .msg { font-weight: 700; margin-bottom: 4px; }
     #result .sub { font-size: 0.8rem; }
+
+    /* 解鎖成功卡片 */
+    #unlock-card {
+      display: none;
+      margin-top: 20px;
+      width: 100%;
+      max-width: 340px;
+      background: #FFFBE0;
+      border: 1.5px solid #EDD870;
+      border-radius: 16px;
+      padding: 20px 16px;
+      text-align: center;
+    }
+    .uc-top { display: flex; flex-direction: column; align-items: center; margin-bottom: 16px; }
+    .uc-circle {
+      width: 56px; height: 56px; border-radius: 50%;
+      background: #F9C846;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.6rem; font-weight: 700; color: #5D4037;
+    }
+    .uc-title { font-size: 1.25rem; font-weight: 700; color: #5D4037; margin-top: 10px; }
+    .uc-card {
+      background: #FFFFFF; border-radius: 12px; padding: 16px; margin-bottom: 16px;
+    }
+    .uc-emoji { font-size: 3.5rem; line-height: 1.2; margin-bottom: 8px; }
+    .uc-name  { font-size: 1.05rem; font-weight: 700; color: #5D4037; margin-bottom: 6px; }
+    .uc-fact  { font-size: 0.81rem; color: #8A7A5C; line-height: 1.5; }
+    .uc-capsule {
+      display: inline-block; background: #F9C846; border-radius: 99px;
+      padding: 7px 20px; font-size: 0.88rem; font-weight: 700; color: #5D4037;
+    }
 
     .back-btn {
       display: inline-block;
@@ -67,6 +97,22 @@
 <p class="hint">將鏡頭對準景點 QR Code，自動辨識並解鎖拼圖碎片</p>
 
 <div id="reader"></div>
+
+<!-- 解鎖成功卡片 -->
+<div id="unlock-card">
+  <div class="uc-top">
+    <div class="uc-circle">✓</div>
+    <div class="uc-title">解鎖成功！</div>
+  </div>
+  <div class="uc-card">
+    <div class="uc-emoji" id="uc-emoji"></div>
+    <div class="uc-name"  id="uc-name"></div>
+    <div class="uc-fact"  id="uc-fact"></div>
+  </div>
+  <div class="uc-capsule" id="uc-capsule"></div>
+</div>
+
+<!-- 已收集 / 錯誤提示 -->
 <div id="result"></div>
 
 <a class="back-btn" id="back-btn" href="/puzzle?uid={{ user_id }}">← 返回拼圖進度</a>
@@ -119,26 +165,36 @@
       const data = await res.json();
 
       if (!data.ok) {
-        showResult("error", "❌", "這個 QR Code 無效", data.error || "");
+        showSimple("error", "❌", "這個 QR Code 無效", data.error || "");
         resumeScan();
       } else if (data.already_had) {
-        showResult("already", "🔄", "你已經收集過這片囉！",
+        showSimple("already", "🔄", "你已經收集過這片囉！",
           `目前進度：${data.count} / ${data.total} 片`);
         resumeScan();
       } else {
         html5QrCode.stop();
-        showResult("success", "🧩", "解鎖成功！",
-          `目前進度：${data.count} / ${data.total} 片`);
+        showUnlockCard(data.piece_emoji, data.piece_name, data.piece_fun_fact,
+                       data.count, data.total);
       }
     } catch (e) {
-      showResult("error", "❌", "網路錯誤，請稍後再試", e.toString());
+      showSimple("error", "❌", "網路錯誤，請稍後再試", e.toString());
       resumeScan();
     }
   }
 
-  function showResult(type, icon, msg, sub) {
+  function showUnlockCard(emoji, name, fact, count, total) {
+    document.getElementById("result").style.display = "none";
+    document.getElementById("uc-emoji").textContent   = emoji;
+    document.getElementById("uc-name").textContent    = name;
+    document.getElementById("uc-fact").textContent    = fact;
+    document.getElementById("uc-capsule").textContent = `目前進度 ${count} / ${total}`;
+    document.getElementById("unlock-card").style.display = "block";
+  }
+
+  function showSimple(type, icon, msg, sub) {
+    document.getElementById("unlock-card").style.display = "none";
     const el = document.getElementById("result");
-    el.className = `result ${type}`;
+    el.className = type;
     el.style.display = "block";
     el.innerHTML = `<div class="big">${icon}</div><div class="msg">${msg}</div><div class="sub">${sub}</div>`;
   }

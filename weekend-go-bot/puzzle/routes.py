@@ -5,9 +5,27 @@
   GET  /puzzle/scan         自動掃碼頁面（?uid=<LINE user_id>）
   POST /api/puzzle/checkin  解鎖碎片 API（JSON body）
 """
+import os
+
 from flask import Blueprint, jsonify, render_template, request
 
-from puzzle.models import PIECES, add_piece, get_user_pieces
+from puzzle.models import PIECES, PIECE_BY_ID, add_piece, get_user_pieces
+
+
+def _push_unlock_flex(user_id, piece, count, total):
+    """解鎖新碎片後推播 Flex Message 到 LINE 聊天室（失敗時靜默記錄）。"""
+    try:
+        import messages
+        from linebot.v3.messaging import ApiClient, Configuration, MessagingApi, PushMessageRequest
+        token = os.environ.get("LINE_CHANNEL_ACCESS_TOKEN", "")
+        if not token:
+            return
+        with ApiClient(Configuration(access_token=token)) as api_client:
+            MessagingApi(api_client).push_message(
+                PushMessageRequest(to=user_id, messages=[messages.puzzle_unlock_flex(piece, count, total)])
+            )
+    except Exception as exc:
+        print(f"[puzzle] push unlock flex failed: {exc}")
 
 puzzle_bp = Blueprint("puzzle", __name__)
 
@@ -51,12 +69,23 @@ def puzzle_checkin():
     if not success:
         return jsonify({"ok": False, "error": f"invalid piece_id: {piece_id}"}), 400
 
+    piece = PIECE_BY_ID[piece_id]
     collected = get_user_pieces(user_id)
+    count = len(collected)
+    total = len(PIECES)
+
+    # 首次解鎖才推播（重複掃碼不推）
+    if not already_had:
+        _push_unlock_flex(user_id, piece, count, total)
+
     return jsonify({
         "ok": True,
         "already_had": already_had,
         "piece_id": piece_id,
+        "piece_name": piece["name"],
+        "piece_emoji": piece["emoji"],
+        "piece_fun_fact": piece["fun_fact"],
         "collected": sorted(collected),
-        "count": len(collected),
-        "total": len(PIECES),
+        "count": count,
+        "total": total,
     })

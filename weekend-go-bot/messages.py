@@ -556,11 +556,7 @@ FAQ_DATA = [
 # 8. 拼圖集章進度 Carousel
 # ---------------------------------------------------------------------------
 
-# 與 puzzle.html 相同的步道圖示順序
-_TRAIL_ICONS = ["🏔️", "🌳", "🌋", "🛶", "🚴", "🌉", "🌿", "🥾", "⛰️"]
-
-
-def _trail_bubble(piece, is_collected, icon):
+def _trail_bubble(piece, is_collected):
     """單一步道的 micro Flex Bubble（已解鎖黃、未解鎖灰）。"""
     if is_collected:
         hero_bg      = "#FBC02D"
@@ -587,7 +583,7 @@ def _trail_bubble(piece, is_collected, icon):
             "backgroundColor": hero_bg,
             "justifyContent": "center",
             "contents": [
-                {"type": "text", "text": icon, "align": "center", "size": "xxl"}
+                {"type": "text", "text": piece["emoji"], "align": "center", "size": "xxl"}
             ],
         },
         "body": {
@@ -597,14 +593,100 @@ def _trail_bubble(piece, is_collected, icon):
             "paddingAll": "10px",
             "spacing": "xs",
             "contents": [
-                {"type": "text", "text": piece["name"],     "weight": "bold", "size": "sm",  "color": name_color,   "wrap": True},
-                {"type": "text", "text": piece["location"], "size": "xxs",                   "color": loc_color,    "wrap": True},
+                {"type": "text", "text": piece["name"],     "weight": "bold", "size": "sm",  "color": name_color, "wrap": True},
+                {"type": "text", "text": piece["location"], "size": "xxs",                   "color": loc_color,  "wrap": True},
                 {"type": "separator", "margin": "sm"},
                 {"type": "text", "text": status, "size": "xs", "color": status_color,
                  "margin": "sm", "align": "center"},
             ],
         },
     }
+
+
+def puzzle_unlock_flex(piece, count, total):
+    """掃碼解鎖成功後推播到聊天室的 Flex Message 卡片。"""
+    bubble = {
+        "type": "bubble",
+        "body": {
+            "type": "box",
+            "layout": "vertical",
+            "backgroundColor": "#FFFBE0",
+            "paddingAll": "20px",
+            "spacing": "none",
+            "contents": [
+                # 上方：黃色圓形打勾 + 標題
+                {
+                    "type": "box",
+                    "layout": "vertical",
+                    "alignItems": "center",
+                    "paddingTop": "4px",
+                    "paddingBottom": "4px",
+                    "contents": [
+                        {
+                            "type": "box",
+                            "layout": "vertical",
+                            "width": "56px",
+                            "height": "56px",
+                            "cornerRadius": "99px",
+                            "backgroundColor": "#F9C846",
+                            "justifyContent": "center",
+                            "alignItems": "center",
+                            "contents": [
+                                {"type": "text", "text": "✓", "size": "xl", "weight": "bold",
+                                 "color": "#5D4037", "align": "center", "gravity": "center"}
+                            ],
+                        },
+                        {"type": "text", "text": "解鎖成功！", "weight": "bold", "size": "xl",
+                         "color": "#5D4037", "margin": "md", "align": "center"},
+                    ],
+                },
+                # 中間：白色卡片（大 emoji + 景點名 + 小知識）
+                {
+                    "type": "box",
+                    "layout": "vertical",
+                    "backgroundColor": "#FFFFFF",
+                    "cornerRadius": "12px",
+                    "paddingAll": "16px",
+                    "margin": "lg",
+                    "alignItems": "center",
+                    "contents": [
+                        {"type": "text", "text": piece["emoji"], "size": "5xl", "align": "center"},
+                        {"type": "text", "text": piece["name"],  "weight": "bold", "size": "lg",
+                         "color": "#5D4037", "margin": "md", "align": "center"},
+                        {"type": "text", "text": piece.get("fun_fact", ""), "size": "sm",
+                         "color": "#8A7A5C", "align": "center", "wrap": True, "margin": "sm"},
+                    ],
+                },
+                # 下方：黃色膠囊進度標籤
+                {
+                    "type": "box",
+                    "layout": "horizontal",
+                    "justifyContent": "center",
+                    "margin": "lg",
+                    "contents": [
+                        {
+                            "type": "box",
+                            "layout": "vertical",
+                            "backgroundColor": "#F9C846",
+                            "cornerRadius": "99px",
+                            "paddingStart": "20px",
+                            "paddingEnd": "20px",
+                            "paddingTop": "8px",
+                            "paddingBottom": "8px",
+                            "contents": [
+                                {"type": "text", "text": f"目前進度 {count} / {total}",
+                                 "size": "sm", "weight": "bold", "color": "#5D4037", "align": "center"}
+                            ],
+                        }
+                    ],
+                },
+            ],
+        },
+    }
+    return FlexMessage(
+        alt_text=f"🧩 解鎖「{piece['name']}」！目前進度 {count}/{total}",
+        contents=FlexBubble.from_dict(bubble),
+    )
 
 
 def puzzle_progress_carousel(user_id):
@@ -644,8 +726,8 @@ def puzzle_progress_carousel(user_id):
     }
 
     trail_bubbles = [
-        _trail_bubble(piece, piece["id"] in collected, _TRAIL_ICONS[i])
-        for i, piece in enumerate(PIECES)
+        _trail_bubble(piece, piece["id"] in collected)
+        for piece in PIECES
     ]
 
     return FlexMessage(
