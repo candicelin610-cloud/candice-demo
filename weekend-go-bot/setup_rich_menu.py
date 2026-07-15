@@ -52,10 +52,10 @@ IMAGE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "r
 MENU_ITEMS = [
     ("活動推薦", "bike",     ("message", "🗺️ 活動推薦")),
     ("一日行程", "map",      ("message", "🚶 一日行程")),
-    ("集章護照", "medal",    ("uri",     "https://liff.line.me/2010569072-7YL42XMG")),
+    ("集章護照", "passport", ("uri",     "https://liff.line.me/2010569072-7YL42XMG")),
     ("活動影片", "video",    ("message", "🎬 活動影片")),
     ("排行榜",  "trophy",   ("message", "排行榜")),
-    ("掃碼集章", "person",   ("uri",     "https://liff.line.me/2010569072-Xzfs0jWO")),
+    ("掃碼集章", "phone",    ("uri",     "https://liff.line.me/2010569072-Xzfs0jWO")),
 ]
 
 # 鵝黃色系配色：依格子位置給不同深淺的黃，圖示與文字統一用深咖啡色
@@ -80,57 +80,44 @@ def _load_font(size):
     return ImageFont.load_default()
 
 
-def _draw_bike_icon(draw, cx, cy, r, color, width):
-    """簡易自行車線稿：兩個輪子 + 車架"""
-    wheel_r = r * 0.42
-    left = (cx - r * 0.55, cy + r * 0.3)
-    right = (cx + r * 0.55, cy + r * 0.3)
-    seat = (cx - r * 0.05, cy - r * 0.5)
-    handle = (cx + r * 0.55, cy - r * 0.15)
-    pedal = (cx - r * 0.05, cy + r * 0.3)
+def _draw_bike_icon(draw, cx, cy, r, color, width, bg_color=None):
+    """自行車：兩個厚邊圓形輪子 + 三角形車架"""
+    wheel_r = r * 0.40
+    lx, ly = cx - r * 0.50, cy + r * 0.22   # 左輪中心
+    rx, ry = cx + r * 0.50, cy + r * 0.22   # 右輪中心
 
-    draw.ellipse(
-        [left[0] - wheel_r, left[1] - wheel_r, left[0] + wheel_r, left[1] + wheel_r],
-        outline=color, width=width,
-    )
-    draw.ellipse(
-        [right[0] - wheel_r, right[1] - wheel_r, right[0] + wheel_r, right[1] + wheel_r],
-        outline=color, width=width,
-    )
-    draw.line([left, seat], fill=color, width=width)
-    draw.line([seat, pedal], fill=color, width=width)
-    draw.line([pedal, right], fill=color, width=width)
-    draw.line([seat, handle], fill=color, width=width)
-    draw.line([handle, right], fill=color, width=width)
+    draw.ellipse([lx-wheel_r, ly-wheel_r, lx+wheel_r, ly+wheel_r], outline=color, width=width)
+    draw.ellipse([rx-wheel_r, ry-wheel_r, rx+wheel_r, ry+wheel_r], outline=color, width=width)
+
+    seat   = (cx - r*0.05, cy - r*0.40)     # 座墊
+    bb     = (cx - r*0.05, cy + r*0.22)     # 中軸（踏板）
+    handle = (cx + r*0.50, cy - r*0.08)     # 龍頭
+
+    draw.line([seat, bb],        fill=color, width=width)   # 座管
+    draw.line([bb, (rx, ry)],    fill=color, width=width)   # 鏈條撐
+    draw.line([seat, handle],    fill=color, width=width)   # 上管
+    draw.line([handle, (rx, ry)],fill=color, width=width)   # 前叉
+    draw.line([(lx, ly), seat],  fill=color, width=width)   # 後叉
 
 
 def _draw_map_icon(draw, cx, cy, r, color, width, bg_color):
-    """簡易地圖定位點：水滴形（圓頭 + 尖底）中間挖一個圓孔，露出背景色"""
+    """定位圖釘：水滴形（圓頭 + 尖底）中間挖空圓孔"""
     head_r = r * 0.55
-    head_cy = cy - r * 0.2
-    tip = (cx, cy + r * 0.65)
+    head_cy = cy - r * 0.20
+    tip_y = cy + r * 0.68
 
-    draw.polygon(
-        [
-            (cx - head_r * 0.95, head_cy + head_r * 0.35),
-            (cx + head_r * 0.95, head_cy + head_r * 0.35),
-            tip,
-        ],
-        fill=color,
-    )
-    draw.ellipse(
-        [cx - head_r, head_cy - head_r, cx + head_r, head_cy + head_r],
-        fill=color,
-    )
+    draw.ellipse([cx-head_r, head_cy-head_r, cx+head_r, head_cy+head_r], fill=color)
+    draw.polygon([
+        (cx - head_r*0.92, head_cy + head_r*0.30),
+        (cx + head_r*0.92, head_cy + head_r*0.30),
+        (cx, tip_y),
+    ], fill=color)
     hole_r = head_r * 0.42
-    draw.ellipse(
-        [cx - hole_r, head_cy - hole_r, cx + hole_r, head_cy + hole_r],
-        fill=bg_color,
-    )
+    draw.ellipse([cx-hole_r, head_cy-hole_r, cx+hole_r, head_cy+hole_r], fill=bg_color)
 
 
 def _star_points(cx, cy, outer_r, inner_r, n=5, rotation=-90):
-    """產生 n 角星形的頂點座標（用於繪製獎章中心的星星）"""
+    """產生 n 角星形的頂點座標"""
     points = []
     angle = math.radians(rotation)
     step = math.pi / n
@@ -141,85 +128,48 @@ def _star_points(cx, cy, outer_r, inner_r, n=5, rotation=-90):
     return points
 
 
-def _draw_medal_icon(draw, cx, cy, r, color, width, bg_color):
-    """簡易獎章：圓形勳章（中心鏤空星形） + 兩條緞帶"""
-    medal_cy = cy - r * 0.15
-    medal_r = r * 0.5
+def _draw_passport_icon(draw, cx, cy, r, color, width, bg_color=None):
+    """護照封面：圓角方形外框 + 中央五角星 + 底部裝訂線"""
+    pad = r * 0.72
+    rr = max(int(r * 0.18), 12)
 
-    # 緞帶尾端固定在圓形邊緣（角度 250° / 290°），往下延伸，避免與圓形重疊出怪異形狀
-    for angle_deg, tip_dx in ((250, -0.32), (290, 0.32)):
-        a = math.radians(angle_deg)
-        anchor_outer = (cx + medal_r * 1.05 * math.cos(a), medal_cy + medal_r * 1.05 * math.sin(a))
-        anchor_inner = (cx + medal_r * 0.55 * math.cos(a), medal_cy + medal_r * 0.55 * math.sin(a))
-        tip = (cx + r * tip_dx, cy + r * 0.85)
-        draw.polygon([anchor_outer, anchor_inner, tip], fill=color)
+    try:
+        draw.rounded_rectangle(
+            [cx-pad, cy-pad*1.08, cx+pad, cy+pad*0.92],
+            radius=rr, outline=color, width=width,
+        )
+    except AttributeError:
+        draw.rectangle([cx-pad, cy-pad*1.08, cx+pad, cy+pad*0.92], outline=color, width=width)
 
-    # 勳章圓形實心，蓋住緞帶與圓形交接處
-    draw.ellipse(
-        [cx - medal_r, medal_cy - medal_r, cx + medal_r, medal_cy + medal_r],
-        fill=color,
-    )
+    star_r = r * 0.33
+    draw.polygon(_star_points(cx, cy - r*0.08, star_r, star_r * 0.42), fill=color)
 
-    # 中心鏤空一個星形，露出背景色，呈現勳章紋路
-    star = _star_points(cx, medal_cy, medal_r * 0.6, medal_r * 0.26)
-    draw.polygon(star, fill=bg_color)
+    line_y = cy + r * 0.54
+    lw = max(int(width * 0.75), 6)
+    draw.line([cx - pad*0.80, line_y, cx + pad*0.80, line_y], fill=color, width=lw)
 
 
-def _draw_video_icon(draw, cx, cy, r, color, width):
-    """簡易播放鍵：圓形外框 + 三角形播放符號"""
-    draw.ellipse([cx - r * 0.7, cy - r * 0.7, cx + r * 0.7, cy + r * 0.7], outline=color, width=width)
-    tri_r = r * 0.38
-    draw.polygon(
-        [
-            (cx - tri_r * 0.6, cy - tri_r),
-            (cx - tri_r * 0.6, cy + tri_r),
-            (cx + tri_r * 1.1, cy),
-        ],
-        fill=color,
-    )
+def _draw_video_icon(draw, cx, cy, r, color, width, bg_color=None):
+    """播放按鈕：厚邊圓形外框 + 填實三角形播放鍵"""
+    draw.ellipse([cx-r*0.72, cy-r*0.72, cx+r*0.72, cy+r*0.72], outline=color, width=width)
+    tri = r * 0.36
+    draw.polygon([
+        (cx - tri*0.55, cy - tri),
+        (cx - tri*0.55, cy + tri),
+        (cx + tri*0.95, cy),
+    ], fill=color)
 
 
-def _draw_question_icon(draw, cx, cy, r, color, width, font_path_size):
-    """簡易問號圖示：圓形外框 + 置中問號文字"""
-    draw.ellipse([cx - r * 0.7, cy - r * 0.7, cx + r * 0.7, cy + r * 0.7], outline=color, width=width)
-    font = _load_font(font_path_size)
-    bbox = draw.textbbox((0, 0), "?", font=font)
-    w, h = bbox[2] - bbox[0], bbox[3] - bbox[1]
-    draw.text((cx - w / 2 - bbox[0], cy - h / 2 - bbox[1]), "?", font=font, fill=color)
+def _draw_trophy_icon(draw, cx, cy, r, color, width, bg_color=None):
+    """獎盃：寬杯身（杯口/杯底比 ≈ 1.15，避免漏斗感）+ 圓弧握把 + 頸部 + 底座"""
+    cup_tw = r * 0.68   # 杯口半寬
+    cup_bw = r * 0.59   # 杯底半寬（只微縮，避免漏斗感）
+    cup_ty = cy - r * 0.66
+    cup_by = cy - r * 0.06
 
-
-def _draw_person_icon(draw, cx, cy, r, color, width):
-    """簡易人形圖示：頭（圓形） + 身體（扇形肩膀）"""
-    head_r = r * 0.32
-    head_cy = cy - r * 0.35
-    draw.ellipse(
-        [cx - head_r, head_cy - head_r, cx + head_r, head_cy + head_r],
-        fill=color,
-    )
-    body_w = r * 1.1
-    body_h = r * 0.85
-    draw.pieslice(
-        [cx - body_w / 2, cy - body_h * 0.1, cx + body_w / 2, cy + body_h * 1.5],
-        180, 360,
-        fill=color,
-    )
-
-
-def _draw_trophy_icon(draw, cx, cy, r, color, width):
-    """獎盃剪影：圓頂杯身 + 頸部 + 底座（純實心、無描線把手）"""
-    cup_tw = r * 0.76    # 杯口半寬（最寬）
-    cup_bw = r * 0.36    # 杯底半寬（最窄）
-    cup_ty = cy - r * 0.72
-    cup_by = cy - r * 0.10
-
-    # ① 圓頂橢圓（讓杯口上緣圓潤）
-    rim_h = r * 0.14
-    draw.ellipse(
-        [cx - cup_tw, cup_ty - rim_h, cx + cup_tw, cup_ty + rim_h],
-        fill=color,
-    )
-
-    # ② 杯身梯形（從橢圓中線向下收窄）
+    # 杯口圓頂
+    draw.ellipse([cx-cup_tw, cup_ty-r*0.11, cx+cup_tw, cup_ty+r*0.11], fill=color)
+    # 杯身梯形
     draw.polygon([
         (cx - cup_tw, cup_ty),
         (cx + cup_tw, cup_ty),
@@ -227,23 +177,46 @@ def _draw_trophy_icon(draw, cx, cy, r, color, width):
         (cx - cup_bw, cup_by),
     ], fill=color)
 
-    # ③ 頸部細柱
-    nw = r * 0.17
-    neck_bot = cy + r * 0.33
-    draw.rectangle([cx - nw, cup_by, cx + nw, neck_bot], fill=color)
+    # 圓弧握把（厚描線，與其他圖示線條粗細一致）
+    hw = r * 0.26
+    h_top = cup_ty + r * 0.08
+    h_bot = cup_ty + r * 0.54
+    draw.arc([cx - cup_tw - hw*2, h_top, cx - cup_tw, h_bot], start=90,  end=270, fill=color, width=width)
+    draw.arc([cx + cup_tw,        h_top, cx + cup_tw + hw*2, h_bot], start=270, end=90,  fill=color, width=width)
 
-    # ④ 底座平台
-    bw = r * 0.64
-    draw.rectangle([cx - bw, neck_bot, cx + bw, neck_bot + r * 0.23], fill=color)
+    # 頸部細柱
+    nw = r * 0.20
+    neck_bot = cy + r * 0.30
+    draw.rectangle([cx-nw, cup_by, cx+nw, neck_bot], fill=color)
+
+    # 底座（比杯底窄）
+    bw = r * 0.52
+    draw.rectangle([cx-bw, neck_bot, cx+bw, neck_bot+r*0.20], fill=color)
 
 
+def _draw_phone_icon(draw, cx, cy, r, color, width, bg_color=None):
+    """手機：圓角矩形外框 + 中央圓點（掃碼鏡頭）"""
+    pw = r * 0.50
+    ph = r * 0.76
+    rr = max(int(r * 0.14), 10)
+
+    try:
+        draw.rounded_rectangle([cx-pw, cy-ph, cx+pw, cy+ph], radius=rr, outline=color, width=width)
+    except AttributeError:
+        draw.rectangle([cx-pw, cy-ph, cx+pw, cy+ph], outline=color, width=width)
+
+    dot_r = r * 0.18
+    draw.ellipse([cx-dot_r, cy-dot_r, cx+dot_r, cy+dot_r], fill=color)
+
+
+# 所有 icon 統一簽名：(draw, cx, cy, r, color, width, bg_color)
 ICON_DRAWERS = {
-    "bike":   _draw_bike_icon,
-    "map":    _draw_map_icon,
-    "medal":  _draw_medal_icon,
-    "video":  _draw_video_icon,
-    "person": _draw_person_icon,
-    "trophy": _draw_trophy_icon,
+    "bike":     _draw_bike_icon,
+    "map":      _draw_map_icon,
+    "passport": _draw_passport_icon,
+    "video":    _draw_video_icon,
+    "trophy":   _draw_trophy_icon,
+    "phone":    _draw_phone_icon,
 }
 
 
@@ -267,14 +240,8 @@ def generate_image():
 
         draw.rectangle([x0, y0, x1, y1], fill=COLORS[index], outline="#FFFFFF", width=8)
 
-        if icon_key == "question":
-            _draw_question_icon(draw, cx, icon_cy, icon_radius, ICON_TEXT_COLOR, icon_line_width, int(icon_radius * 1.3))
-        elif icon_key == "medal":
-            _draw_medal_icon(draw, cx, icon_cy, icon_radius, ICON_TEXT_COLOR, icon_line_width, COLORS[index])
-        elif icon_key == "map":
-            _draw_map_icon(draw, cx, icon_cy, icon_radius, ICON_TEXT_COLOR, icon_line_width, COLORS[index])
-        else:
-            ICON_DRAWERS[icon_key](draw, cx, icon_cy, icon_radius, ICON_TEXT_COLOR, icon_line_width)
+        # 所有 icon 統一傳入 bg_color，各函式視需要決定是否使用
+        ICON_DRAWERS[icon_key](draw, cx, icon_cy, icon_radius, ICON_TEXT_COLOR, icon_line_width, COLORS[index])
 
         label_bbox = draw.textbbox((0, 0), label, font=font_label)
         label_w = label_bbox[2] - label_bbox[0]
