@@ -2,6 +2,7 @@
 所有 Flex Message / Carousel / Quick Reply 的內容建構函式。
 統一回傳 line-bot-sdk 的訊息物件，handlers.py 只需呼叫並 reply_message。
 """
+import os
 import random
 
 from linebot.v3.messaging.models import (
@@ -605,6 +606,45 @@ def _trail_bubble(piece, is_collected):
 
 def puzzle_unlock_flex(piece, count, total):
     """掃碼解鎖成功後推播到聊天室的 Flex Message 卡片。"""
+    is_complete = (count == total)
+    title_text = "太厲害了！全部收集完成！" if is_complete else "解鎖成功！"
+    mascot_name = "happy" if is_complete else "excited"
+
+    # 有設定 BASE_URL 才能在 LINE 顯示圖片（需公開可存取的 URL）
+    base_url = os.environ.get("BASE_URL", "").rstrip("/")
+    if base_url:
+        top_contents = [
+            {
+                "type": "image",
+                "url": f"{base_url}/static/images/mascot_{mascot_name}.png",
+                "size": "75px",
+                "align": "center",
+                "margin": "none",
+            },
+            {"type": "text", "text": title_text, "weight": "bold", "size": "xl",
+             "color": "#5D4037", "margin": "md", "align": "center"},
+        ]
+    else:
+        # fallback：沒有公開 URL 時維持原有的黃色圓形打勾
+        top_contents = [
+            {
+                "type": "box",
+                "layout": "vertical",
+                "width": "56px",
+                "height": "56px",
+                "cornerRadius": "99px",
+                "backgroundColor": "#F9C846",
+                "justifyContent": "center",
+                "alignItems": "center",
+                "contents": [
+                    {"type": "text", "text": "✓", "size": "xl", "weight": "bold",
+                     "color": "#5D4037", "align": "center", "gravity": "center"}
+                ],
+            },
+            {"type": "text", "text": title_text, "weight": "bold", "size": "xl",
+             "color": "#5D4037", "margin": "md", "align": "center"},
+        ]
+
     bubble = {
         "type": "bubble",
         "body": {
@@ -614,31 +654,14 @@ def puzzle_unlock_flex(piece, count, total):
             "paddingAll": "20px",
             "spacing": "none",
             "contents": [
-                # 上方：黃色圓形打勾 + 標題
+                # 上方：吉祥物圖片（或 fallback 打勾圓形）+ 標題
                 {
                     "type": "box",
                     "layout": "vertical",
                     "alignItems": "center",
                     "paddingTop": "4px",
                     "paddingBottom": "4px",
-                    "contents": [
-                        {
-                            "type": "box",
-                            "layout": "vertical",
-                            "width": "56px",
-                            "height": "56px",
-                            "cornerRadius": "99px",
-                            "backgroundColor": "#F9C846",
-                            "justifyContent": "center",
-                            "alignItems": "center",
-                            "contents": [
-                                {"type": "text", "text": "✓", "size": "xl", "weight": "bold",
-                                 "color": "#5D4037", "align": "center", "gravity": "center"}
-                            ],
-                        },
-                        {"type": "text", "text": "解鎖成功！", "weight": "bold", "size": "xl",
-                         "color": "#5D4037", "margin": "md", "align": "center"},
-                    ],
+                    "contents": top_contents,
                 },
                 # 中間：白色卡片（大 emoji + 景點名 + 小知識）
                 {
@@ -683,10 +706,9 @@ def puzzle_unlock_flex(piece, count, total):
             ],
         },
     }
-    return FlexMessage(
-        alt_text=f"🧩 解鎖「{piece['name']}」！目前進度 {count}/{total}",
-        contents=FlexBubble.from_dict(bubble),
-    )
+    alt = (f"🎉 太厲害了！全部 {total} 片都集完了！"
+           if is_complete else f"🧩 解鎖「{piece['name']}」！目前進度 {count}/{total}")
+    return FlexMessage(alt_text=alt, contents=FlexBubble.from_dict(bubble))
 
 
 def puzzle_progress_carousel(user_id):

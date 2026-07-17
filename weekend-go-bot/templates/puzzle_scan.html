@@ -61,12 +61,11 @@
       text-align: center;
     }
     .uc-top { display: flex; flex-direction: column; align-items: center; margin-bottom: 16px; }
-    .uc-circle {
-      width: 56px; height: 56px; border-radius: 50%;
-      background: #F9C846;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.6rem; font-weight: 700; color: #5D4037;
+    .uc-mascot {
+      width: 80px; height: 80px; object-fit: contain;
     }
+    #result .mascot-sm { margin-bottom: 6px; }
+    #result .mascot-sm img { width: 64px; height: 64px; object-fit: contain; }
     .uc-title { font-size: 1.25rem; font-weight: 700; color: #5D4037; margin-top: 10px; }
     .uc-card {
       background: #FFFFFF; border-radius: 12px; padding: 16px; margin-bottom: 16px;
@@ -101,8 +100,8 @@
 <!-- 解鎖成功卡片 -->
 <div id="unlock-card">
   <div class="uc-top">
-    <div class="uc-circle">✓</div>
-    <div class="uc-title">解鎖成功！</div>
+    <img class="uc-mascot" id="uc-mascot" src="" alt="Candice">
+    <div class="uc-title" id="uc-title"></div>
   </div>
   <div class="uc-card">
     <div class="uc-emoji" id="uc-emoji"></div>
@@ -168,8 +167,7 @@
         showSimple("error", "❌", "這個 QR Code 無效", data.error || "");
         resumeScan();
       } else if (data.already_had) {
-        showSimple("already", "🔄", "你已經收集過這片囉！",
-          `目前進度：${data.count} / ${data.total} 片`);
+        showDuplicate(data.count, data.total);
         resumeScan();
       } else {
         html5QrCode.stop();
@@ -183,12 +181,29 @@
   }
 
   function showUnlockCard(emoji, name, fact, count, total) {
+    const isComplete = (count === total);
+    document.getElementById("uc-mascot").src =
+      isComplete ? "/static/images/mascot_happy.png" : "/static/images/mascot_excited.png";
+    document.getElementById("uc-title").textContent =
+      isComplete ? "太厲害了！全部收集完成！" : "解鎖成功！";
     document.getElementById("result").style.display = "none";
     document.getElementById("uc-emoji").textContent   = emoji;
     document.getElementById("uc-name").textContent    = name;
     document.getElementById("uc-fact").textContent    = fact;
     document.getElementById("uc-capsule").textContent = `目前進度 ${count} / ${total}`;
     document.getElementById("unlock-card").style.display = "block";
+  }
+
+  function showDuplicate(count, total) {
+    document.getElementById("unlock-card").style.display = "none";
+    const el = document.getElementById("result");
+    el.className = "already";
+    el.style.display = "block";
+    el.innerHTML = `
+      <div class="mascot-sm"><img src="/static/images/mascot_thinking.png" alt="Candice"></div>
+      <div class="msg">這裡你已經來過囉</div>
+      <div class="sub">目前進度：${count} / ${total} 片</div>
+    `;
   }
 
   function showSimple(type, icon, msg, sub) {
