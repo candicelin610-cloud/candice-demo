@@ -24,66 +24,16 @@ VIDEO_URL = "https://www.youtube.com/watch?v=wCkerYMffMo"
 # 1. 加入好友歡迎訊息
 # ---------------------------------------------------------------------------
 def welcome_flex_message():
-    bubble = {
-        "type": "bubble",
-        "body": {
-            "type": "box",
-            "layout": "vertical",
-            "spacing": "md",
-            "backgroundColor": "#FFF9C4",
-            "paddingAll": "20px",
-            "contents": [
-                {
-                    "type": "text",
-                    "text": "🎉 歡迎加入 Weekend GO！",
-                    "weight": "bold",
-                    "size": "xl",
-                    "color": "#5D4037",
-                    "wrap": True,
-                },
-                {
-                    "type": "text",
-                    "text": "放假不知道去哪？讓我幫你找到今天的目的地！",
-                    "size": "sm",
-                    "color": "#8D6E63",
-                    "wrap": True,
-                },
-            ],
-        },
-        "footer": {
-            "type": "box",
-            "layout": "vertical",
-            "spacing": "sm",
-            "backgroundColor": "#FFF9C4",
-            "paddingAll": "20px",
-            "contents": [
-                {
-                    "type": "box",
-                    "layout": "vertical",
-                    "backgroundColor": "#FBC02D",
-                    "cornerRadius": "md",
-                    "paddingAll": "12px",
-                    "action": {
-                        "type": "postback",
-                        "label": "開始探索 →",
-                        "data": "action=activities",
-                    },
-                    "contents": [
-                        {
-                            "type": "text",
-                            "text": "開始探索 →",
-                            "align": "center",
-                            "weight": "bold",
-                            "color": "#5D4037",
-                        }
-                    ],
-                }
-            ],
-        },
-    }
-    return FlexMessage(
-        alt_text="歡迎加入 Weekend GO！雙北遊憩 Bot",
-        contents=FlexBubble.from_dict(bubble),
+    return TextMessage(
+        text=(
+            "嗨，歡迎加入 Weekend GO！🌟\n\n"
+            "跟著 Candice 一起走訪雙北，蒐集屬於你的旅程故事吧！\n\n"
+            "📍 點選下方選單開始探索\n"
+            "💬 隨時輸入「集章護照」查看目前進度\n"
+            "✏️ 想在排行榜上有自己的名字，而不是「神秘玩家」？\n"
+            "   輸入「設定代號 你的名字」幫自己取個好記的代號吧！\n\n"
+            "準備好了嗎？出發吧！"
+        )
     )
 
 
