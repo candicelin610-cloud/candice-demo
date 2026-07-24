@@ -29,63 +29,124 @@ def welcome_flex_message():
         "body": {
             "type": "box",
             "layout": "vertical",
-            "spacing": "md",
-            "backgroundColor": "#FFF9C4",
+            "backgroundColor": "#FFFBE0",
             "paddingAll": "20px",
+            "spacing": "none",
             "contents": [
+                # 標題（xxl ≈ 24px，最接近 22px 的原生尺寸）
                 {
                     "type": "text",
                     "text": "嗨，歡迎加入 Weekend GO！🌟",
                     "weight": "bold",
-                    "size": "xl",
+                    "size": "xxl",
                     "color": "#5D4037",
                     "wrap": True,
                 },
+                # 副標（sm ≈ 14px，淺色、行距加大）
                 {
                     "type": "text",
                     "text": "跟著 Candice 一起走訪雙北，蒐集屬於你的旅程故事吧！",
                     "size": "sm",
-                    "color": "#8D6E63",
+                    "color": "#8A7A5C",
                     "wrap": True,
+                    "margin": "sm",
+                    "lineSpacing": "6px",
                 },
+                # 分隔線
+                {"type": "separator", "margin": "lg", "color": "#EDD870"},
+                # 卡片 1：集章護照（白底）
                 {
-                    "type": "text",
-                    "text": "💬 隨時輸入「集章護照」查看目前進度",
-                    "size": "sm",
-                    "color": "#5D4037",
-                    "wrap": True,
+                    "type": "box",
+                    "layout": "horizontal",
+                    "backgroundColor": "#FFFFFF",
+                    "cornerRadius": "14px",
+                    "paddingAll": "13px",
+                    "margin": "lg",
+                    "spacing": "sm",
+                    "contents": [
+                        {
+                            "type": "text",
+                            "text": "💬",
+                            "size": "xl",
+                            "flex": 0,
+                            "gravity": "center",
+                        },
+                        {
+                            "type": "text",
+                            "text": "隨時輸入「集章護照」查看目前進度",
+                            "size": "sm",
+                            "color": "#5D4037",
+                            "wrap": True,
+                            "flex": 1,
+                            "gravity": "center",
+                        },
+                    ],
                 },
+                # 卡片 2：設定代號（淺黃底，首行加粗）
                 {
-                    "type": "text",
-                    "text": (
-                        "✏️ 想在排行榜上有自己的名字，而不是「神秘玩家」？\n"
-                        "輸入「設定代號 你的名字」幫自己取個好記的代號吧！"
-                    ),
-                    "size": "sm",
-                    "color": "#5D4037",
-                    "wrap": True,
+                    "type": "box",
+                    "layout": "horizontal",
+                    "backgroundColor": "#FFF3B0",
+                    "cornerRadius": "14px",
+                    "paddingAll": "13px",
+                    "margin": "sm",
+                    "spacing": "sm",
+                    "contents": [
+                        {
+                            "type": "text",
+                            "text": "✏️",
+                            "size": "xl",
+                            "flex": 0,
+                            "gravity": "top",
+                        },
+                        {
+                            "type": "box",
+                            "layout": "vertical",
+                            "flex": 1,
+                            "spacing": "xs",
+                            "contents": [
+                                {
+                                    "type": "text",
+                                    "text": "想在排行榜上有自己的名字，而不是「神秘玩家」？",
+                                    "size": "sm",
+                                    "color": "#5D4037",
+                                    "wrap": True,
+                                    "weight": "bold",
+                                },
+                                {
+                                    "type": "text",
+                                    "text": "輸入「設定代號 你的名字」幫自己取個好記的代號吧！",
+                                    "size": "sm",
+                                    "color": "#5D4037",
+                                    "wrap": True,
+                                },
+                            ],
+                        },
+                    ],
                 },
+                # 結尾語（置中加粗）
                 {
                     "type": "text",
                     "text": "準備好了嗎？出發吧！",
                     "size": "sm",
                     "weight": "bold",
                     "color": "#5D4037",
-                    "wrap": True,
+                    "align": "center",
+                    "margin": "lg",
                 },
             ],
         },
         "footer": {
             "type": "box",
             "layout": "vertical",
-            "spacing": "sm",
-            "backgroundColor": "#FFF9C4",
-            "paddingAll": "20px",
+            "backgroundColor": "#FFFBE0",
+            "paddingAll": "16px",
+            "paddingTop": "8px",
             "contents": [
                 {
                     "type": "box",
                     "layout": "vertical",
-                    "backgroundColor": "#FBC02D",
+                    "backgroundColor": "#F9C846",
                     "cornerRadius": "md",
                     "paddingAll": "12px",
                     "action": {
